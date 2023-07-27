@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash gen1.sh)",
+      "Bash(bash gen2.sh)",
+      "Bash(bash gen3.sh)"
+    ]
+  }
+}
