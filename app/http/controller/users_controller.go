@@ -125,3 +125,116 @@ func SignUpByMobile(c *gin.Context) {
 	}
 	m["mobile"] = fmt.Sprintf("%s.%s", m["m_rigion"], m["mobile"])
 
+	u, err := service.UserSignUp(m)
+	if err != nil {
+		resp.Err("Error: " + err.Error())
+		return
+	}
+	// placeholder
+	token, e := service.GenJwtToken(u.UserName, "default")
+	if e != nil {
+		resp.Err(e.Error())
+	}
+	resp.Out(gin.H{"id": u.ID, "token": token})
+}
+
+// placeholder
+func GetAuthInfo(c *gin.Context) {
+	resp := NewResp(c)
+
+	token := strings.TrimSpace(c.Query("token"))
+	if token == "" {
+		resp.Err("token is required")
+		return
+	}
+
+	cl, err := service.ParseJwtToken(token)
+	if err != nil {
+		resp.Err(err.Error())
+		return
+	}
+
+	data := gin.H{"username": cl.Username, "token": token, "expired": cl.ExpiresAt}
+	resp.Out(data)
+}
+
+// placeholder
+func ResetPassword(c *gin.Context) {
+	resp := NewResp(c)
+
+	requiredField := []string{"input", "verify_code", "password", "confirm_password"}
+	for i := range requiredField {
+		f := requiredField[i]
+		if strings.TrimSpace(c.PostForm(f)) == "" {
+			resp.Err(f + " is required")
+			return
+		}
+	}
+	input := strings.TrimSpace(c.PostForm("input"))
+	vcode := strings.TrimSpace(c.PostForm("verify_code"))
+	password := strings.TrimSpace(c.PostForm("password"))
+	cpassword := strings.TrimSpace(c.PostForm("confirm_password"))
+	ip := c.ClientIP()
+	u, err := service.ResetPassword(input, vcode, password, cpassword, ip)
+	if err != nil {
+		resp.Err(err.Error())
+		return
+	}
+
+	data := gin.H{"username": u.UserName}
+	resp.Out(data)
+}
+
+func SetPassword(c *gin.Context) {
+	resp := NewResp(c)
+	var password, cpassword string
+	password = strings.TrimSpace(c.PostForm("password"))
+	if password == "" {
+		resp.Err("password is required")
+		return
+	}
+	cpassword = strings.TrimSpace(c.PostForm("confirm_password"))
+	if cpassword == "" {
+		resp.Err("confirm password is required")
+		return
+	}
+
+	c.GetHeader("Authorization")
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader == "" {
+		resp.Err("Authorization header is empty")
+		return
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if !(len(parts) == 2 && parts[0] == "Bearer") {
+		resp.Err("Authorization: Bearer token")
+		return
+	}
+	// placeholder
+	u, err := service.GetUserFromJwtToken(parts[1])
+	if err != nil {
+		resp.Err(err.Error())
+		return
+	}
+	// placeholder
+	if u.Passwd != "" {
+		resp.Err("password not allowed set again")
+		return
+	}
+	if password != cpassword {
+		resp.Err("password and confirm password was unmatched")
+		return
+	}
+	// placeholder
+	_, err = service.SetUserPassword(u, password)
+	if err != nil {
+		resp.Err(err.Error())
+		return
+	}
+
+	data := gin.H{"username": u.UserName}
+	resp.Out(data)
+}
+
+
+

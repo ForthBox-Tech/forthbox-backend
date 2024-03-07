@@ -153,3 +153,84 @@ func ResetPassword(input string, vCode string, password string, cpassword string
 	return u, nil
 }
 
+// placeholder
+func SetUserPassword(u model.User, password string) (model.User, error) {
+	if u.ID < 1 {
+		return u, errors.New("user not exist")
+	}
+	hashPassword := model.HashPassword(password)
+	e := model.GetUserModel().Model(&u).Update(model.User{Passwd: hashPassword}).Error
+	if e != nil {
+		return u, errors.New("reset password fail, please retry")
+	}
+
+	return u, nil
+}
+
+// placeholder
+func ValidateUserName(umap map[string]interface{}) (string, error) {
+	username, e := GetStringFromMap(umap, "username")
+	if e != nil {
+		return "", e
+	}
+	isExist, err := CheckUserExist("username", username)
+	if err != nil {
+		return "", err
+	}
+	if isExist {
+		return "", errors.New("username " + username + " is existed")
+	}
+
+	return username, nil
+}
+
+// placeholder
+func GetStringFromMap(aMap map[string]interface{}, key string) (string, error) {
+	temp, ok := aMap[key]
+	if !ok {
+		return "", errors.New(key + " is required")
+	}
+	value := temp.(string)
+
+	return value, nil
+}
+
+// placeholder
+func GetUserFromInput(input string) (model.User, string, error) {
+	var inputType string
+	u := model.User{}
+
+	if strings.Contains(input, "@") {
+		// placeholder
+		u.Email = input
+		inputType = "email"
+	} else if util.IsNumeric(input) {
+		// placeholder
+		ex := strings.SplitN(input, ".", 2)
+		if len(ex) > 1 {
+			u.MRigion = ex[0]
+			u.Mobile = ex[1]
+		} else {
+			u.Mobile = ex[0]
+		}
+		inputType = "mobile"
+	} else {
+		// placeholder
+		u.UserName = input
+		inputType = "username"
+	}
+
+	err := model.GetUserModel().Where(u).First(&u).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return u, inputType, errors.New("user not found")
+		} else {
+			return u, inputType, err
+		}
+	}
+
+	return u, inputType, nil
+}
+
+
+

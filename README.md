@@ -139,3 +139,148 @@ The image:
 
 ### User APIs
 
+- `POST /users/login`
+- `POST /users/signup_by_email`
+- `POST /users/signup_by_mobile`
+- `POST /users/reset_password`
+- `POST /users/set_password`
+- `GET /users/check_exist`
+- `GET /users/get_auth_info`
+
+### Message APIs
+
+- `POST /messages/send_email_verify_code`
+- `POST /messages/send_mobile_verify_code`
+
+## Request Notes
+
+### Login
+
+`POST /users/login`
+
+Expected form fields:
+
+- `input`
+- `password`
+
+Returns a JWT token after successful authentication.
+
+### Sign Up by Email
+
+`POST /users/signup_by_email`
+
+Expected form fields:
+
+- `username`
+- `email`
+- `verify_code`
+- `password` optional
+- `invite_code` optional
+
+Returns the created user ID and a JWT token.
+
+### Sign Up by Mobile
+
+`POST /users/signup_by_mobile`
+
+Expected form fields:
+
+- `username`
+- `mobile`
+- `verify_code`
+- `password` optional
+- `invite_code` optional
+- `m_rigion` optional, defaults to `86`
+
+Returns the created user ID and a JWT token.
+
+### Check Whether a User Exists
+
+`GET /users/check_exist`
+
+Query parameters:
+
+- `field`: one of `username`, `mobile`, or `email`
+- `value`: lookup value
+- `m_rigion`: optional for mobile lookups, defaults to `86`
+
+### Auth Inspection
+
+`GET /users/get_auth_info`
+
+Query parameters:
+
+- `token`
+
+Returns token claims such as username and expiration time.
+
+### Reset Password
+
+`POST /users/reset_password`
+
+Expected form fields:
+
+- `input`
+- `verify_code`
+- `password`
+- `confirm_password`
+
+### Set Password
+
+`POST /users/set_password`
+
+Expected form fields:
+
+- `password`
+- `confirm_password`
+
+Expected header:
+
+- `Authorization: Bearer <token>`
+
+This route is intended for users who do not already have a password set.
+
+### Send Verification Codes
+
+`POST /messages/send_email_verify_code`
+
+- form field: `email`
+
+`POST /messages/send_mobile_verify_code`
+
+- form field: `mobile`
+- optional form field: `m_rigion`, defaults to `86`
+
+When `IsDev=true`, the generated verification code is also returned in the response to simplify local testing.
+
+## CORS Behavior
+
+- Development mode: all origins are allowed
+- Non-development mode: requests are limited to configured Forthbox domains under `forthbox.io` and `forthbox.com`
+
+## Operational Notes
+
+- The service loads configuration and database connections during package initialization. If `conf/app.ini` is missing or the database is unreachable, startup fails immediately.
+- The current repository does not include an automated test suite.
+- Sensitive values in INI files should be treated as secrets and should be replaced with environment-appropriate credentials before deployment.
+
+## Related Documentation
+
+Additional notes are available in the [`docs`](./docs) directory:
+
+- `docs/architecture.md`
+- `docs/local-dev.md`
+- `docs/deployment.md`
+- `docs/operations.md`
+- `docs/troubleshooting.md`
+- `docs/qa.md`
+
+## Quick Start
+
+```powershell
+Copy-Item conf\app_dev.ini conf\app.ini
+go run .\cmd\migrate\db.go
+go run .\cmd\server\main.go
+```
+
+After startup, the API is available on `http://localhost:8080`.
